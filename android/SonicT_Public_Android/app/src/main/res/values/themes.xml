@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.SonicT" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/sonict_green</item>
+        <item name="colorPrimaryVariant">@color/sonict_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:fontFamily">sans</item>
+    </style>
+</resources>
