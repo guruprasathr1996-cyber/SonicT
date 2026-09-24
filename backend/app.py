@@ -5,10 +5,12 @@ import hmac
 import uuid
 import shutil
 import subprocess
+from pathlib import Path
 import joblib
 import numpy as np
 import pandas as pd
 import librosa
+from fastapi.staticfiles import StaticFiles
 from speaker_verification import register_speaker, verify_speaker
 from forensic_report import build_forensic_report
 from forensic_pdf import generate_forensic_pdf
@@ -4324,3 +4326,18 @@ def verify_trusted_channel(
                 "SonicT's forensic classification."
             )
     }
+
+
+# =========================================================
+# OFFLINE FRONTEND
+# =========================================================
+# Serve the Vite build from a static folder beside this app.py file.
+# Keep this block after every API endpoint.
+STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+if STATIC_DIR.exists():
+    app.mount(
+        "/",
+        StaticFiles(directory=str(STATIC_DIR), html=True),
+        name="frontend",
+    )
