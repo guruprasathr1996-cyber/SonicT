@@ -181,7 +181,8 @@ const [resolutionChoice, setResolutionChoice] = useState("INCONCLUSIVE");
     message: "Not checked",
   });
 
-const API_BASE = "https://flier-retreat-bring.ngrok-free.dev";
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || "";
 
 const API_AUTH_HEADERS = {
   "ngrok-skip-browser-warning": "true",
