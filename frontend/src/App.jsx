@@ -181,12 +181,12 @@ const [resolutionChoice, setResolutionChoice] = useState("INCONCLUSIVE");
     message: "Not checked",
   });
 
-  const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://flier-retreat-bring.ngrok-free.dev";
 
-  const API_AUTH_HEADERS = authToken
-    ? { Authorization: `Bearer ${authToken}` }
-    : {};
-
+const API_AUTH_HEADERS = {
+  "ngrok-skip-browser-warning": "true",
+  ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+};
 
   /* ======================================================
      ALERTS & INCIDENTS API
@@ -1367,10 +1367,9 @@ useEffect(() => {
     });
 
     try {
-      const response =
-        await fetch(
-          `${API_BASE}/health`
-        );
+      const response = await fetch(`${API_BASE}/health`, {
+  headers: API_AUTH_HEADERS,
+});
 
       if (!response.ok) {
         throw new Error(
@@ -7744,7 +7743,10 @@ const renderAlertsPage = () => {
     try {
       const response = await fetch(`${API_BASE}/auth/${authMode === "signup" ? "signup" : "login"}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+  "Content-Type": "application/json",
+  "ngrok-skip-browser-warning": "true",
+},
         body: JSON.stringify({
           name: authForm.name.trim(),
           email,
