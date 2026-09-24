@@ -1,0 +1,240 @@
+/* =========================================================
+   SonicT - Global Cybersecurity Theme
+   File: src/index.css
+   ========================================================= */
+
+:root {
+  /* Main backgrounds */
+  --bg-main: #050b14;
+  --bg-sidebar: #071525;
+  --bg-card: #0b1b2b;
+  --bg-card-hover: #102a42;
+  --bg-elevated: #0d2236;
+
+  /* Borders */
+  --border: #183b56;
+  --border-light: #205579;
+
+  /* Primary cyber colors */
+  --primary: #168bff;
+  --primary-hover: #32a3ff;
+  --cyan: #00d9ff;
+
+  /* Status colors */
+  --success: #20d67b;
+  --warning: #ffb020;
+  --danger: #ff4057;
+  --purple: #9c6cff;
+
+  /* Text */
+  --text-primary: #f4f8ff;
+  --text-secondary: #8faac3;
+  --text-muted: #607d96;
+
+  /* Effects */
+  --cyber-glow: 0 0 18px rgba(0, 217, 255, 0.18);
+  --blue-glow: 0 0 18px rgba(22, 139, 255, 0.2);
+
+  --font-main:
+    Inter,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+
+  font-family: var(--font-main);
+  color: var(--text-primary);
+  background: var(--bg-main);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+  background: var(--bg-main);
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-width: 320px;
+  width: 100%;
+  min-height: 100vh;
+
+  background:
+    radial-gradient(
+      circle at 85% 5%,
+      rgba(0, 217, 255, 0.07),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 15% 90%,
+      rgba(22, 139, 255, 0.05),
+      transparent 30%
+    ),
+    var(--bg-main);
+
+  color: var(--text-primary);
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* =========================================================
+   TYPOGRAPHY
+   ========================================================= */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-top: 0;
+  color: var(--text-primary);
+  font-family: var(--font-main);
+}
+
+p {
+  color: var(--text-secondary);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* =========================================================
+   FORM CONTROLS
+   ========================================================= */
+
+input,
+select,
+textarea {
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  outline: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(22, 139, 255, 0.12);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #06111e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #174366;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #174366 #06111e;
+}
+
+/* =========================================================
+   TEXT SELECTION
+   ========================================================= */
+
+::selection {
+  background: rgba(0, 217, 255, 0.25);
+  color: #ffffff;
+}
+
+/* =========================================================
+   COMMON STATUS COLORS
+   ========================================================= */
+
+.text-success {
+  color: var(--success);
+}
+
+.text-warning {
+  color: var(--warning);
+}
+
+.text-danger {
+  color: var(--danger);
+}
+
+.text-cyan {
+  color: var(--cyan);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+  body {
+    overflow-x: hidden;
+  }
+}

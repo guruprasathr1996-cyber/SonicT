@@ -1,0 +1,36 @@
+# Secrets
+.env
+.env.*
+*.key
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+temp/
+*.db
+
+# Large models and datasets
+*.pt
+*.pth
+*.pkl
+*.joblib
+*.tflite
+models/
+datasets/
+
+# Frontend
+node_modules/
+dist/
+
+# Android
+.gradle/
+.idea/
+.kotlin/
+**/build/
+local.properties
+
+# Operating system
+Thumbs.db
+.DS_Store
