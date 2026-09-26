@@ -81,15 +81,25 @@ class SpeakerMonitorService : Service() {
                     if (offset == shorts.size) {
                         val pcm = FloatArray(shorts.size) { shorts[it] / 32768f }
                         val localResult = model.analyze(pcm)
-                        val message = when (localResult) {
-                            is ModelResult.Available -> when {
-                                localResult.risk >= 80 -> "Critical audio risk ${localResult.risk}/100 — end and verify"
-                                localResult.risk >= 60 -> "High audio risk ${localResult.risk}/100 — verify caller"
-                                else -> "Dynamic audio risk ${localResult.risk}/100"
+                        var expandedMessage: String? = null
+                        val backendResult = if (store.backendUrl.isNotBlank()) {
+                            backend.analyze(shorts)
+                        } else {
+                            BackendResult.Unavailable("Backend is not configured")
+                        }
+                        val message = when (backendResult) {
+                            is BackendResult.Success -> {
+                                expandedMessage = backendResult.analysisText()
+                                store.latestAnalysis = expandedMessage!!
+                                backendResult.notificationText()
                             }
-                            is ModelResult.Unavailable -> when (val result = backend.analyze(shorts)) {
-                                is BackendResult.Success -> result.notificationText()
-                                is BackendResult.Unavailable -> if (store.backendUrl.isBlank()) {
+                            is BackendResult.Unavailable -> when (localResult) {
+                                is ModelResult.Available -> when {
+                                    localResult.risk >= 80 -> "Critical audio risk ${localResult.risk}/100 — end and verify"
+                                    localResult.risk >= 60 -> "High audio risk ${localResult.risk}/100 — verify caller"
+                                    else -> "Dynamic audio risk ${localResult.risk}/100"
+                                }
+                                is ModelResult.Unavailable -> if (store.backendUrl.isBlank()) {
                                     "Configure laptop address — metadata screening is active"
                                 } else {
                                     "SonicT server unavailable — metadata screening is active"
@@ -97,7 +107,10 @@ class SpeakerMonitorService : Service() {
                             }
                         }
                         NotificationManagerCompat.from(this)
-                            .notify(NOTIFICATION_ID, monitorNotification(message))
+                            .notify(
+                                NOTIFICATION_ID,
+                                monitorNotification(message, expandedMessage)
+                            )
                     }
                 }
             } catch (_: Exception) {
@@ -113,11 +126,19 @@ class SpeakerMonitorService : Service() {
         }
     }
 
-    private fun monitorNotification(message: String): Notification =
+    private fun monitorNotification(
+        message: String,
+        expandedMessage: String? = null
+    ): Notification =
         NotificationCompat.Builder(this, RiskNotification.CHANNEL_MONITOR)
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .setContentTitle("SonicT speaker-mode monitoring")
             .setContentText(message)
+            .apply {
+                if (!expandedMessage.isNullOrBlank()) {
+                    setStyle(NotificationCompat.BigTextStyle().bigText(expandedMessage))
+                }
+            }
             .setOngoing(true)
             .build()
 

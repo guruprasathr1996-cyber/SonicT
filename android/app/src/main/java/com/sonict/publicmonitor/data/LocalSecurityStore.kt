@@ -20,6 +20,13 @@ class LocalSecurityStore(context: Context) {
         get() = preferences.getString("api_key", "sonict-demo-2026") ?: "sonict-demo-2026"
         set(value) = preferences.edit().putString("api_key", value.trim()).apply()
 
+    var latestAnalysis: String
+        get() = preferences.getString(
+            "latest_analysis",
+            "No five-feature analysis has been completed yet."
+        ) ?: "No five-feature analysis has been completed yet."
+        set(value) = preferences.edit().putString("latest_analysis", value).apply()
+
     fun block(number: String) = preferences.edit()
         .putBoolean("blocked_${hash(number)}", true)
         .apply()

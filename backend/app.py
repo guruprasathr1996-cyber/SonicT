@@ -3380,6 +3380,50 @@ async def analyze_live_chunk(
                     "class_probabilities"
                 ],
 
+            # Individual SonicT forensic branches. These values are
+            # probabilities in the range 0.0-1.0 and are returned so mobile
+            # clients can explain the final fusion decision.
+            "feature_analysis": {
+                "f1_voice_clone": round(
+                    float(result.get("features", {}).get(
+                        "voice_clone_probability", 0.0
+                    )), 4
+                ),
+                "f2_spectrogram_artifacts": round(
+                    float(result.get("features", {}).get(
+                        "spectrogram_probability", 0.0
+                    )), 4
+                ),
+                "f3_voice_features": round(
+                    float(result.get("features", {}).get(
+                        "voice_feature_probability", 0.0
+                    )), 4
+                ),
+                "f4_tampering": round(
+                    float(result.get("tampering", {}).get(
+                        "f4_max", 0.0
+                    )), 4
+                ),
+                "f4_mean_tampering": round(
+                    float(result.get("tampering", {}).get(
+                        "f4_mean", 0.0
+                    )), 4
+                ),
+                "f4_suspicious_ratio": round(
+                    float(result.get("tampering", {}).get(
+                        "f4_suspicious_ratio", 0.0
+                    )), 4
+                ),
+                "f4_suspicious_windows": result.get(
+                    "tampering", {}
+                ).get("suspicious_windows", []),
+                "f5_replay_attack": round(
+                    float(result.get("features", {}).get(
+                        "replay_probability", 0.0
+                    )), 4
+                )
+            },
+
             "risk_score":
                 risk[
                     "risk_score"

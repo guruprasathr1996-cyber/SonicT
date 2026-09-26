@@ -135,6 +135,17 @@ class MainActivity : AppCompatActivity() {
         })
 
         root.addView(spacer())
+        root.addView(label("Latest five-feature analysis", 20f, true))
+        val latestResult = label(store.latestAnalysis, 14f, false)
+        root.addView(latestResult)
+        root.addView(Button(this).apply {
+            text = "Refresh analysed result"
+            setOnClickListener {
+                latestResult.text = store.latestAnalysis
+            }
+        })
+
+        root.addView(spacer())
         root.addView(label(
             "Privacy: caller numbers are hashed before local history is stored. Audio chunks " +
                 "are kept in memory. When a backend is configured, each chunk is sent to that " +

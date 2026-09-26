@@ -12,7 +12,13 @@ sealed interface BackendResult {
         val confidence: Double,
         val riskScore: Double,
         val riskLevel: String,
-        val recommendation: String
+        val recommendation: String,
+        val f1VoiceClone: Double,
+        val f2Spectrogram: Double,
+        val f3VoiceFeatures: Double,
+        val f4Tampering: Double,
+        val f5Replay: Double,
+        val liveStatus: String
     ) : BackendResult {
         fun notificationText(): String {
             val risk = riskScore.toInt().coerceIn(0, 100)
@@ -24,6 +30,22 @@ sealed interface BackendResult {
                 else -> "$name • risk $risk/100"
             }
         }
+
+        fun analysisText(): String = buildString {
+            append("Final: ${classification.uppercase()} • ")
+            append("${percent(confidence)}% confidence\n")
+            append("Risk: ${riskScore.toInt().coerceIn(0, 100)}/100 • $riskLevel\n\n")
+            append("F1 Voice clone: ${percent(f1VoiceClone)}%\n")
+            append("F2 Spectrogram artifacts: ${percent(f2Spectrogram)}%\n")
+            append("F3 Voice-feature anomaly: ${percent(f3VoiceFeatures)}%\n")
+            append("F4 Tampering/splicing: ${percent(f4Tampering)}%\n")
+            append("F5 Replay attack: ${percent(f5Replay)}%\n\n")
+            append("Status: $liveStatus\n")
+            append(recommendation)
+        }
+
+        private fun percent(value: Double): Int =
+            (value.coerceIn(0.0, 1.0) * 100.0).toInt()
     }
 
     data class Unavailable(val reason: String) : BackendResult
@@ -47,6 +69,7 @@ class SonicTBackendAnalyzer(
             connection.readTimeout = 120_000
             connection.doOutput = true
             connection.setRequestProperty("Accept", "application/json")
+            connection.setRequestProperty("ngrok-skip-browser-warning","true")
             connection.setRequestProperty("X-API-Key", apiKey)
             connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=$boundary")
 
@@ -69,12 +92,19 @@ class SonicTBackendAnalyzer(
             if (status !in 200..299) error("SonicT returned HTTP $status")
 
             val json = JSONObject(body)
+            val features = json.optJSONObject("feature_analysis") ?: JSONObject()
             BackendResult.Success(
                 classification = json.optString("classification", "UNKNOWN"),
                 confidence = json.optDouble("confidence", 0.0),
                 riskScore = json.optDouble("risk_score", 0.0),
                 riskLevel = json.optString("risk_level", "UNKNOWN"),
-                recommendation = json.optString("recommendation", "Verify the caller")
+                recommendation = json.optString("recommendation", "Verify the caller"),
+                f1VoiceClone = features.optDouble("f1_voice_clone", 0.0),
+                f2Spectrogram = features.optDouble("f2_spectrogram_artifacts", 0.0),
+                f3VoiceFeatures = features.optDouble("f3_voice_features", 0.0),
+                f4Tampering = features.optDouble("f4_tampering", 0.0),
+                f5Replay = features.optDouble("f5_replay_attack", 0.0),
+                liveStatus = json.optString("live_status", "MONITOR")
             )
         }.getOrElse { BackendResult.Unavailable(it.message ?: "Connection failed") }
     }
