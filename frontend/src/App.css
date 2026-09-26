@@ -2031,6 +2031,78 @@ strong {
   margin-top: 22px;
 }
 
+.android-sync-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  align-items: center;
+  margin: 20px 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-soft, #f1f8f6);
+}
+
+.android-sync-card.connected {
+  border-color: rgba(7, 150, 111, 0.35);
+  box-shadow: 0 8px 24px rgba(7, 150, 111, 0.08);
+}
+
+.android-sync-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #07966f;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.android-sync-copy {
+  display: grid;
+  gap: 3px;
+}
+
+.android-sync-copy span {
+  color: #087a5d;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.android-sync-copy strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.android-sync-copy small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.android-sync-card button {
+  border: 0;
+  border-radius: 10px;
+  padding: 11px 15px;
+  background: #102438;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .android-sync-card {
+    grid-template-columns: auto 1fr;
+  }
+
+  .android-sync-card button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
+
 
 /* =================================================
    TAMPERING

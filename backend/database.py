@@ -131,8 +131,85 @@ def init_db():
 
     cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)")
 
+    # Recent live-client results used to synchronize the Android APK with the
+    # existing SonicT web dashboard. Only compact JSON results are stored;
+    # recorded audio is never retained here.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS mobile_analysis_results (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            received_at TEXT NOT NULL,
+            client_type TEXT NOT NULL DEFAULT 'android',
+            device_id TEXT,
+            result_json TEXT NOT NULL
+        )
+    """)
+
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_mobile_results_client_id
+        ON mobile_analysis_results(client_type, id DESC)
+    """)
+
     conn.commit()
     conn.close()
+
+
+def save_mobile_analysis(result, client_type="android", device_id=None):
+    """Store a compact live-analysis result for cross-device UI sync."""
+    safe_client = str(client_type or "android").strip().lower()[:32]
+    safe_device = str(device_id or "").strip()[:128] or None
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO mobile_analysis_results (
+            received_at, client_type, device_id, result_json
+        ) VALUES (?, ?, ?, ?)
+    """, (
+        datetime.now().isoformat(),
+        safe_client,
+        safe_device,
+        json.dumps(result, ensure_ascii=False),
+    ))
+    result_id = cursor.lastrowid
+
+    # Prevent continuous monitoring from growing the local database forever.
+    cursor.execute("""
+        DELETE FROM mobile_analysis_results
+        WHERE id NOT IN (
+            SELECT id FROM mobile_analysis_results
+            ORDER BY id DESC LIMIT 100
+        )
+    """)
+    conn.commit()
+    conn.close()
+    return result_id
+
+
+def get_latest_mobile_analysis(client_type="android"):
+    """Return the most recent synchronized result for the requested client."""
+    safe_client = str(client_type or "android").strip().lower()[:32]
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, received_at, client_type, device_id, result_json
+        FROM mobile_analysis_results
+        WHERE client_type = ?
+        ORDER BY id DESC
+        LIMIT 1
+    """, (safe_client,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if row is None:
+        return None
+
+    return {
+        "id": row["id"],
+        "received_at": row["received_at"],
+        "client_type": row["client_type"],
+        "device_id": row["device_id"],
+        "result": json.loads(row["result_json"]),
+    }
 
 
 def save_analysis(filename, result):

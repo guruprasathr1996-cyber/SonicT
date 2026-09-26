@@ -46,7 +46,9 @@ from database import (
     update_incident_lifecycle,
     create_user,
     get_user_by_email,
-    mark_user_login
+    mark_user_login,
+    save_mobile_analysis,
+    get_latest_mobile_analysis
 )
 
 from verification_service import (
@@ -3185,7 +3187,9 @@ async def analyze_chunks(
     dependencies=[Depends(verify_api_key)]
 )
 async def analyze_live_chunk(
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    x_sonict_client: str = Header(default="android", alias="X-SonicT-Client"),
+    x_device_id: str = Header(default="", alias="X-SonicT-Device-ID")
 ):
 
     original_temp_path = None
@@ -3346,7 +3350,7 @@ async def analyze_live_chunk(
         # RETURN LIVE ANALYSIS
         # =================================================
 
-        return {
+        live_response = {
 
             "analysis_type":
                 "live_chunk",
@@ -3470,6 +3474,21 @@ async def analyze_live_chunk(
                     )
                 )
         }
+
+        # The existing website marks its own microphone requests as "web".
+        # APK versions that do not yet send the header safely default to
+        # "android", so their latest result becomes visible in the web UI.
+        client_type = str(x_sonict_client or "android").strip().lower()
+        if client_type not in {"web", "android"}:
+            client_type = "android"
+
+        save_mobile_analysis(
+            live_response,
+            client_type=client_type,
+            device_id=x_device_id
+        )
+
+        return live_response
 
 
     except HTTPException:
@@ -4039,6 +4058,25 @@ async def verify_speaker_endpoint(
 # =========================================================
 # ALERTS & INCIDENTS
 # =========================================================
+
+@app.get(
+    "/mobile/latest",
+    dependencies=[Depends(verify_api_key)]
+)
+def latest_mobile_result():
+    """Return the latest F1-F5 result produced by the Android APK."""
+    latest = get_latest_mobile_analysis(client_type="android")
+    if latest is None:
+        return {
+            "available": False,
+            "message": "Waiting for the Android APK to submit an audio chunk."
+        }
+
+    return {
+        "available": True,
+        **latest
+    }
+
 
 @app.get(
     "/incidents",

@@ -305,6 +305,10 @@ function App() {
   const [liveHistory, setLiveHistory] = useState([]);
   const [liveError, setLiveError] = useState("");
   const [liveChunkCount, setLiveChunkCount] = useState(0);
+  const [androidSyncEnabled, setAndroidSyncEnabled] = useState(false);
+  const [androidSyncStatus, setAndroidSyncStatus] = useState("Not connected");
+  const [androidLastSeen, setAndroidLastSeen] = useState("");
+  const androidLatestIdRef = useRef(null);
 
   // ======================================================
   // CONTINUOUS LIVE THREAT STATES
@@ -404,8 +408,79 @@ const API_BASE =
 
 const API_AUTH_HEADERS = {
   "ngrok-skip-browser-warning": "true",
+  "X-SonicT-Client": "web",
   ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
 };
+
+useEffect(() => {
+  if (!androidSyncEnabled || demoMode) {
+    return undefined;
+  }
+
+  let cancelled = false;
+
+  const loadLatestAndroidResult = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/mobile/latest`, {
+        headers: {
+          "ngrok-skip-browser-warning": "true",
+          "X-SonicT-Client": "web",
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(data?.detail || "Unable to read the Android result.");
+      }
+      if (cancelled) return;
+
+      if (!data?.available || !data?.result) {
+        setAndroidSyncStatus("Connected · waiting for APK analysis");
+        return;
+      }
+
+      setAndroidSyncStatus("Connected · receiving APK results");
+      setAndroidLastSeen(data.received_at || "");
+
+      if (androidLatestIdRef.current === data.id) {
+        return;
+      }
+
+      androidLatestIdRef.current = data.id;
+      const mobileResult = {
+        ...data.result,
+        source_client: "android",
+        received_at: data.received_at,
+      };
+      setLiveResult(mobileResult);
+      setLiveHistory((previous) => [
+        {
+          ...mobileResult,
+          timestamp: new Date(data.received_at || Date.now()).toLocaleTimeString(),
+          chunk_number: previous.length + 1,
+        },
+        ...previous,
+      ].slice(0, 20));
+      setLiveChunkCount((count) => count + 1);
+      setLiveError("");
+    } catch (err) {
+      if (!cancelled) {
+        setAndroidSyncStatus("Connection error");
+        setLiveError(err.message || "Unable to connect to Android monitoring.");
+      }
+    }
+  };
+
+  setAndroidSyncStatus("Connecting to APK results...");
+  loadLatestAndroidResult();
+  const intervalId = window.setInterval(loadLatestAndroidResult, 3000);
+
+  return () => {
+    cancelled = true;
+    window.clearInterval(intervalId);
+  };
+}, [androidSyncEnabled, demoMode, API_BASE, authToken]);
 
   /* ======================================================
      ALERTS & INCIDENTS API
@@ -4785,6 +4860,33 @@ useEffect(() => {
           </div>
 
 
+          <div className={`android-sync-card ${androidSyncEnabled ? "connected" : ""}`}>
+            <div className="android-sync-icon">AP</div>
+            <div className="android-sync-copy">
+              <span>ANDROID APK CONNECTION</span>
+              <strong>{androidSyncStatus}</strong>
+              <small>
+                {androidLastSeen
+                  ? `Latest result: ${new Date(androidLastSeen).toLocaleString()}`
+                  : "Displays the APK's latest F1–F5 analysis in this existing dashboard."}
+              </small>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                androidLatestIdRef.current = null;
+                setAndroidSyncEnabled((enabled) => !enabled);
+                if (androidSyncEnabled) {
+                  setAndroidSyncStatus("Not connected");
+                  setAndroidLastSeen("");
+                }
+              }}
+            >
+              {androidSyncEnabled ? "Disconnect APK" : "Connect Android APK"}
+            </button>
+          </div>
+
+
           <div className="tamper-stat-grid">
 
             <div className="stat-card">
@@ -4994,6 +5096,7 @@ useEffect(() => {
 
                 <small>
                   SonicT fusion decision
+                  {liveResult.source_client === "android" ? " · Android APK" : ""}
                 </small>
 
               </div>
