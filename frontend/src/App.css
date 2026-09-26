@@ -2007,6 +2007,30 @@ strong {
     7px;
 }
 
+.live-feature-evidence {
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+}
+
+.live-feature-evidence h2 {
+  margin: 5px 0 4px;
+  color: var(--text);
+  font-size: 18px;
+}
+
+.live-feature-intro {
+  max-width: 720px;
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.live-feature-evidence + .live-risk-notification {
+  margin-top: 22px;
+}
+
 
 /* =================================================
    TAMPERING

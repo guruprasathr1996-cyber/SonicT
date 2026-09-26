@@ -2012,6 +2012,62 @@ useEffect(() => {
         ]
       : [];
 
+  const liveFeatureCards = liveResult
+    ? [
+        {
+          code: "F1",
+          title: "Voice Clone",
+          model: "WavLM + Attention",
+          value:
+            liveResult.feature_analysis?.f1_voice_clone ??
+            liveResult.features?.voice_clone_probability ??
+            0,
+          icon: "AI",
+        },
+        {
+          code: "F2",
+          title: "Spectrogram Artifacts",
+          model: "Log-Mel + CNN",
+          value:
+            liveResult.feature_analysis?.f2_spectrogram_artifacts ??
+            liveResult.features?.spectrogram_probability ??
+            0,
+          icon: "SP",
+        },
+        {
+          code: "F3",
+          title: "Voice-Feature Anomaly",
+          model: "MFCC + Random Forest",
+          value:
+            liveResult.feature_analysis?.f3_voice_features ??
+            liveResult.features?.voice_feature_probability ??
+            0,
+          icon: "VF",
+        },
+        {
+          code: "F4",
+          title: "Tampering / Splicing",
+          model: "Boundary CNN + Temporal",
+          value:
+            liveResult.feature_analysis?.f4_tampering ??
+            liveResult.tampering?.f4_max ??
+            0,
+          icon: "TM",
+        },
+        {
+          code: "F5",
+          title: "Replay Attack",
+          model: "Replay CNN",
+          value:
+            liveResult.feature_analysis?.f5_replay_attack ??
+            liveResult.features?.replay_probability ??
+            liveResult.evidence_warning?.evidence?.replay_probability ??
+            0,
+          icon: "RP",
+        },
+      ]
+    : [];
+
 
   /* ======================================================
      ANALYSIS PAGE
@@ -4982,6 +5038,41 @@ useEffect(() => {
 
               </div>
 
+            </div>
+
+            <div className="live-feature-evidence">
+              <p className="mini-label">LIVE FIVE-LAYER FORENSICS</p>
+              <h2>F1–F5 Evidence Scores</h2>
+              <p className="live-feature-intro">
+                Independent evidence probabilities returned by the SonicT backend
+                for the latest five-second microphone chunk.
+              </p>
+
+              <div className="feature-grid">
+                {liveFeatureCards.map((feature) => (
+                  <div className="feature-card" key={`live-${feature.code}`}>
+                    <div className="feature-header">
+                      <div className="feature-icon">{feature.icon}</div>
+                      <span>{feature.code}</span>
+                    </div>
+
+                    <h3>{feature.title}</h3>
+                    <p className="model-name">{feature.model}</p>
+                    <div className="feature-score">{percent(feature.value)}</div>
+                    <div className="feature-bar">
+                      <div
+                        style={{
+                          width: `${Math.min(
+                            Math.max(Number(feature.value || 0) * 100, 0),
+                            100
+                          )}%`,
+                        }}
+                      />
+                    </div>
+                    <span className="evidence-label">Evidence probability</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className={`live-risk-notification ${liveDynamicRisk >= 80 ? "critical" : liveDynamicRisk >= 60 ? "high" : liveDynamicRisk >= 30 ? "medium" : "safe"}`}>
