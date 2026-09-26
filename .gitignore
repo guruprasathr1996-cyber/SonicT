@@ -34,3 +34,5 @@ local.properties
 # Operating system
 Thumbs.db
 .DS_Store
+/backend/app_backup.py
+/package-lock.json
