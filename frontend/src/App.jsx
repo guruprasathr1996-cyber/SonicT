@@ -1,11 +1,213 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
+const DEMO_TOKEN = "sonict-offline-demo";
+
+const DEMO_RESULT = {
+  input_file: "ai_cloned_voice_demo.wav",
+  classification: "DEEPFAKE",
+  confidence: 0.91,
+  class_probabilities: { genuine: 0.09, deepfake: 0.91 },
+  features: {
+    voice_clone_probability: 0.91,
+    spectrogram_probability: 0.84,
+    voice_feature_probability: 0.79,
+    replay_probability: 0.72,
+  },
+  tampering: {
+    f4_max: 0.93,
+    f4_mean: 0.76,
+    f4_median: 0.79,
+    f4_std: 0.12,
+    f4_suspicious_ratio: 0.68,
+    f4_high_ratio: 0.44,
+    suspicious_windows: [
+      { start: 5, end: 10, score: 0.82 },
+      { start: 15, end: 20, score: 0.93 },
+    ],
+  },
+  voice_integrity_risk: {
+    risk_score: 87,
+    risk_level: "CRITICAL",
+    explanation: "Multiple models detected synthetic voice and editing indicators.",
+  },
+  security_alert: {
+    alert: true,
+    message: "Critical voice-integrity risk. End the call and verify independently.",
+  },
+  operational_assessment: {
+    status: "VERIFICATION_REQUIRED",
+    recommended_action: "Do not authorize sensitive actions. Call back using a trusted number.",
+  },
+  evidence_integrity: {
+    sha256: "demo-8a5d4f3b2c1e7096a814c8d9ef02a1b7",
+    status: "VERIFIED",
+  },
+  privacy_and_retention: {
+    audio_stored: false,
+    message: "Demo sample only. No audio is uploaded or stored.",
+  },
+  experimental_f1b: {
+    prediction: "AI-GENERATED",
+    deepfake_probability: 0.89,
+    label: "AI-GENERATED",
+    probability: 0.89,
+  },
+  forensic_report: {
+    conclusion: "Strong evidence of voice cloning and post-processing tampering.",
+    recommended_action: "Use trusted-channel identity verification before continuing.",
+  },
+  incident: {
+    incident_uuid: "DEMO-INC-001",
+    case_status: "OPEN",
+    verification_status: "PENDING",
+  },
+};
+
+const DEMO_GENUINE_RESULT = {
+  ...DEMO_RESULT,
+  input_file: "genuine_voice_demo.wav",
+  classification: "GENUINE",
+  confidence: 0.96,
+  class_probabilities: { genuine: 0.96, deepfake: 0.04 },
+  features: {
+    voice_clone_probability: 0.04,
+    spectrogram_probability: 0.08,
+    voice_feature_probability: 0.07,
+    replay_probability: 0.03,
+  },
+  tampering: {
+    f4_max: 0.11,
+    f4_mean: 0.05,
+    f4_median: 0.04,
+    f4_std: 0.02,
+    f4_suspicious_ratio: 0,
+    f4_high_ratio: 0,
+    suspicious_windows: [],
+  },
+  voice_integrity_risk: {
+    risk_score: 8,
+    risk_level: "LOW",
+    explanation: "The forensic models found consistent natural speech characteristics.",
+  },
+  security_alert: { alert: false, message: "No major voice-integrity risk detected." },
+  operational_assessment: {
+    status: "NORMAL",
+    recommended_action: "No additional action is required for this demonstration sample.",
+  },
+  experimental_f1b: {
+    prediction: "BONAFIDE",
+    deepfake_probability: 0.04,
+    label: "BONAFIDE",
+    probability: 0.96,
+  },
+  forensic_report: {
+    conclusion: "The sample is consistent with genuine human speech.",
+    recommended_action: "Continue normal verification procedures.",
+  },
+  incident: null,
+};
+
+const DEMO_TAMPERED_RESULT = {
+  ...DEMO_RESULT,
+  input_file: "edited_call_recording_demo.wav",
+  classification: "TAMPERED",
+  confidence: 0.84,
+  class_probabilities: { genuine: 0.16, tampered: 0.84 },
+  features: {
+    voice_clone_probability: 0.29,
+    spectrogram_probability: 0.81,
+    voice_feature_probability: 0.62,
+    replay_probability: 0.18,
+  },
+  tampering: {
+    f4_max: 0.94,
+    f4_mean: 0.71,
+    f4_median: 0.75,
+    f4_std: 0.15,
+    f4_suspicious_ratio: 0.63,
+    f4_high_ratio: 0.41,
+    suspicious_windows: [
+      { start: 10, end: 15, score: 0.86 },
+      { start: 25, end: 30, score: 0.94 },
+    ],
+  },
+  voice_integrity_risk: {
+    risk_score: 74,
+    risk_level: "HIGH",
+    explanation: "Abrupt spectral changes indicate possible cutting and splicing.",
+  },
+  security_alert: { alert: true, message: "Possible audio editing detected. Verify the original recording." },
+  operational_assessment: {
+    status: "VERIFICATION_REQUIRED",
+    recommended_action: "Compare the recording with its original source before using it as evidence.",
+  },
+  experimental_f1b: {
+    prediction: "BONAFIDE",
+    deepfake_probability: 0.29,
+    label: "BONAFIDE",
+    probability: 0.71,
+  },
+  forensic_report: {
+    conclusion: "The recording contains likely editing or splicing regions.",
+    recommended_action: "Review the highlighted time regions and obtain the original file.",
+  },
+  incident: {
+    incident_uuid: "DEMO-INC-002",
+    case_status: "OPEN",
+    verification_status: "PENDING",
+  },
+};
+
+const DEMO_SAMPLES = {
+  genuine: { label: "Genuine Voice", description: "Natural human speech", result: DEMO_GENUINE_RESULT },
+  cloned: { label: "AI-Cloned Voice", description: "Synthetic impersonation", result: DEMO_RESULT },
+  tampered: { label: "Tampered Audio", description: "Edited and spliced call", result: DEMO_TAMPERED_RESULT },
+};
+
+const createDemoReport = (sampleResult) => [{
+  id: `DEMO-RPT-${sampleResult.classification}`,
+  filename: sampleResult.input_file,
+  created_at: "2026-09-25T09:30:00Z",
+  classification: sampleResult.classification,
+  confidence: sampleResult.confidence,
+  class_probabilities: sampleResult.class_probabilities,
+  forensic_conclusion: sampleResult.forensic_report.conclusion,
+  recommended_action: sampleResult.forensic_report.recommended_action,
+  disclaimer: "Pre-analysed demonstration data; not a live forensic result.",
+}];
+
+const createDemoIncidents = (sampleResult) => sampleResult.incident ? [{
+  incident_uuid: sampleResult.incident.incident_uuid,
+  filename: sampleResult.input_file,
+  timestamp: "2026-09-25T09:30:00Z",
+  classification: sampleResult.classification,
+  confidence: sampleResult.confidence,
+  risk_score: sampleResult.voice_integrity_risk.risk_score,
+  risk_level: sampleResult.voice_integrity_risk.risk_level,
+  case_status: "OPEN",
+  verification_status: "PENDING",
+  investigator_notes: "Offline prototype demonstration incident.",
+  resolution: "INCONCLUSIVE",
+}] : [];
+
+const DEMO_REPORTS = createDemoReport(DEMO_RESULT);
+
+const DEMO_INCIDENTS = createDemoIncidents(DEMO_RESULT);
+
 function App() {
+  const [demoMode, setDemoMode] = useState(
+    () => sessionStorage.getItem("sonict_demo_mode") === "true"
+  );
+  const [demoSampleKey, setDemoSampleKey] = useState(
+    () => sessionStorage.getItem("sonict_demo_sample") || "cloned"
+  );
   const [activePage, setActivePage] = useState("dashboard");
   const [authMode, setAuthMode] = useState("signin");
   const [authToken, setAuthToken] = useState(
-    () => localStorage.getItem("sonict_access_token") || sessionStorage.getItem("sonict_access_token") || ""
+    () => sessionStorage.getItem("sonict_demo_mode") === "true"
+      ? DEMO_TOKEN
+      : localStorage.getItem("sonict_access_token") || sessionStorage.getItem("sonict_access_token") || ""
   );
   const [authForm, setAuthForm] = useState({
     name: "",
@@ -68,7 +270,11 @@ function App() {
   const [file, setFile] = useState(null);
   const [audioUrl, setAudioUrl] = useState("");
 
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState(() =>
+    sessionStorage.getItem("sonict_demo_mode") === "true"
+      ? (DEMO_SAMPLES[sessionStorage.getItem("sonict_demo_sample")] || DEMO_SAMPLES.cloned).result
+      : null
+  );
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -151,7 +357,11 @@ function App() {
 
   const [dragActive, setDragActive] = useState(false);
 
-  const [reports, setReports] = useState([]);
+  const [reports, setReports] = useState(() =>
+    sessionStorage.getItem("sonict_demo_mode") === "true"
+      ? createDemoReport((DEMO_SAMPLES[sessionStorage.getItem("sonict_demo_sample")] || DEMO_SAMPLES.cloned).result)
+      : []
+  );
   const [reportsLoading, setReportsLoading] = useState(false);
   const [reportsError, setReportsError] = useState("");
 
@@ -159,10 +369,18 @@ function App() {
   const [reportDownloadError, setReportDownloadError] = useState("");
 
   // ALERTS & INCIDENTS / TRUSTED-CHANNEL VERIFICATION
-const [incidents, setIncidents] = useState([]);
+const [incidents, setIncidents] = useState(() =>
+  sessionStorage.getItem("sonict_demo_mode") === "true"
+    ? createDemoIncidents((DEMO_SAMPLES[sessionStorage.getItem("sonict_demo_sample")] || DEMO_SAMPLES.cloned).result)
+    : []
+);
 const [incidentsLoading, setIncidentsLoading] = useState(false);
 const [incidentsError, setIncidentsError] = useState("");
-const [selectedIncident, setSelectedIncident] = useState(null);
+const [selectedIncident, setSelectedIncident] = useState(() =>
+  sessionStorage.getItem("sonict_demo_mode") === "true"
+    ? createDemoIncidents((DEMO_SAMPLES[sessionStorage.getItem("sonict_demo_sample")] || DEMO_SAMPLES.cloned).result)[0] || null
+    : null
+);
 const [verificationLoading, setVerificationLoading] = useState(false);
 const [verificationError, setVerificationError] = useState("");
 const [verificationMessage, setVerificationMessage] = useState("");
@@ -194,6 +412,10 @@ const API_AUTH_HEADERS = {
   ====================================================== */
 
 const loadIncidents = async () => {
+  if (demoMode) {
+    setIncidents(createDemoIncidents(DEMO_SAMPLES[demoSampleKey]?.result || DEMO_RESULT));
+    return;
+  }
   setIncidentsLoading(true);
   setIncidentsError("");
 
@@ -235,6 +457,11 @@ const loadIncidents = async () => {
 };
 
 const loadIncidentDetails = async (incidentUuid) => {
+  if (demoMode) {
+    const demoItems = createDemoIncidents(DEMO_SAMPLES[demoSampleKey]?.result || DEMO_RESULT);
+    setSelectedIncident(demoItems.find((item) => item.incident_uuid === incidentUuid) || demoItems[0] || null);
+    return;
+  }
   if (!incidentUuid) return;
 
   try {
@@ -268,6 +495,10 @@ const loadIncidentDetails = async (incidentUuid) => {
 };
 
 const loadIncidentAudit = async (incidentUuid) => {
+  if (demoMode) {
+    setIncidentAudit([]);
+    return;
+  }
   if (!incidentUuid) return;
   setIncidentAuditLoading(true);
 
@@ -290,6 +521,10 @@ const loadIncidentAudit = async (incidentUuid) => {
 };
 
 const downloadIncidentReport = async () => {
+  if (demoMode) {
+    setVerificationMessage("Report download requires the live API. The on-screen incident is a pre-analysed demo sample.");
+    return;
+  }
   if (!selectedIncident?.incident_uuid) return;
   setIncidentReportLoading(true);
   setIncidentsError("");
@@ -321,6 +556,10 @@ const downloadIncidentReport = async () => {
 };
 
 const updateIncidentLifecycle = async (action) => {
+  if (demoMode) {
+    setVerificationMessage(`Demo preview: incident action “${action}” was not saved.`);
+    return;
+  }
   if (!selectedIncident?.incident_uuid) return;
   setIncidentActionLoading(true);
   setIncidentsError("");
@@ -366,6 +605,10 @@ const updateIncidentLifecycle = async (action) => {
 };
 
 const requestTrustedVerification = async () => {
+  if (demoMode) {
+    setVerificationMessage("Demo preview: trusted-channel verification requires the live API.");
+    return;
+  }
   if (!selectedIncident?.incident_uuid) return;
 
   setVerificationLoading(true);
@@ -417,6 +660,10 @@ const requestTrustedVerification = async () => {
 };
 
 const verifyTrustedOtp = async () => {
+  if (demoMode) {
+    setVerificationMessage("Demo preview: OTP verification requires the live API.");
+    return;
+  }
   if (!selectedIncident?.incident_uuid) return;
 
   const cleanOtp = otpInput.trim();
@@ -485,16 +732,16 @@ const verifyTrustedOtp = async () => {
 };
 
 useEffect(() => {
-  if (activePage === "alerts") {
+  if (activePage === "alerts" && !demoMode) {
     loadIncidents();
   }
-}, [activePage]);
+}, [activePage, demoMode]);
 
 useEffect(() => {
-  if (activePage === "alerts" && selectedIncident?.incident_uuid) {
+  if (activePage === "alerts" && selectedIncident?.incident_uuid && !demoMode) {
     loadIncidentAudit(selectedIncident.incident_uuid);
   }
-}, [activePage, selectedIncident?.incident_uuid]);
+}, [activePage, selectedIncident?.incident_uuid, demoMode]);
 
 useEffect(() => {
   setInvestigatorNotes(selectedIncident?.investigator_notes || "");
@@ -924,6 +1171,10 @@ useEffect(() => {
 
 
   const startLiveMonitoring = async () => {
+    if (demoMode) {
+      setLiveError("Live microphone analysis requires the SonicT backend. Use Dashboard, Evidence Viewer, Reports, and Analytics to explore the offline sample.");
+      return;
+    }
     if (liveMonitoringRef.current) {
       return;
     }
@@ -1126,6 +1377,16 @@ useEffect(() => {
   ====================================================== */
 
   const analyzeAudio = async () => {
+    if (demoMode) {
+      setLoading(true);
+      setError("");
+      window.setTimeout(() => {
+        setResult(DEMO_SAMPLES[demoSampleKey]?.result || DEMO_RESULT);
+        setLoading(false);
+      }, 500);
+      return;
+    }
+
     if (!file) {
       setError(
         "Please select an audio file."
@@ -1188,6 +1449,11 @@ useEffect(() => {
   ====================================================== */
 
   const analyzeChunks = async () => {
+    if (demoMode) {
+      setChunkError("Offline demo uses a pre-analysed complete result. Connect the API for live 5-second chunk analysis.");
+      return;
+    }
+
     if (!file) {
       setChunkError(
         "Please select an audio file first."
@@ -1251,6 +1517,11 @@ useEffect(() => {
   ====================================================== */
 
   const analyzeMimicry = async () => {
+    if (demoMode) {
+      setMimicryError("Offline demo uses stored sample results. Connect the API to analyse a new voice recording.");
+      return;
+    }
+
     if (!file) {
       setMimicryError(
         "Please select an audio file first."
@@ -1308,6 +1579,10 @@ useEffect(() => {
   ====================================================== */
 
   const loadReports = async () => {
+    if (demoMode) {
+      setReports(createDemoReport(DEMO_SAMPLES[demoSampleKey]?.result || DEMO_RESULT));
+      return;
+    }
     setReportsLoading(true);
     setReportsError("");
 
@@ -1360,6 +1635,10 @@ useEffect(() => {
   ====================================================== */
 
   const checkSystemStatus = async () => {
+    if (demoMode) {
+      setSystemStatus({ api: false, loading: false, message: "Offline demo mode — backend health check is intentionally disabled." });
+      return;
+    }
     setSystemStatus({
       api: false,
       loading: true,
@@ -1410,6 +1689,10 @@ useEffect(() => {
   ====================================================== */
 
   const downloadForensicReport = async () => {
+    if (demoMode) {
+      setReportDownloadError("PDF download requires the live API. This screen shows a pre-analysed demo report.");
+      return;
+    }
     if (!result?.forensic_report) {
       setReportDownloadError(
         "No forensic report is available. Run a new audio analysis first."
@@ -1516,12 +1799,20 @@ useEffect(() => {
 
     setActivePage(page);
 
-    if (page === "reports" || page === "analytics") {
+    if (!demoMode && (page === "reports" || page === "analytics")) {
       loadReports();
     }
 
     if (page === "status") {
-      checkSystemStatus();
+      if (demoMode) {
+        setSystemStatus({
+          api: false,
+          loading: false,
+          message: "Offline demo mode — backend health check is intentionally disabled.",
+        });
+      } else {
+        checkSystemStatus();
+      }
     }
   };
 
@@ -7772,12 +8063,51 @@ const renderAlertsPage = () => {
     }
   };
 
+  const enterDemoMode = () => {
+    sessionStorage.setItem("sonict_demo_mode", "true");
+    sessionStorage.setItem("sonict_demo_sample", "cloned");
+    sessionStorage.removeItem("sonict_access_token");
+    sessionStorage.removeItem("sonict_user");
+    setDemoMode(true);
+    setDemoSampleKey("cloned");
+    setAuthToken(DEMO_TOKEN);
+    setResult(DEMO_RESULT);
+    setReports(DEMO_REPORTS);
+    setIncidents(DEMO_INCIDENTS);
+    setSelectedIncident(DEMO_INCIDENTS[0]);
+    setActivePage("dashboard");
+    setAuthError("");
+  };
+
+  const selectDemoSample = (sampleKey) => {
+    const sample = DEMO_SAMPLES[sampleKey] || DEMO_SAMPLES.cloned;
+    const sampleReports = createDemoReport(sample.result);
+    const sampleIncidents = createDemoIncidents(sample.result);
+    sessionStorage.setItem("sonict_demo_sample", sampleKey);
+    setDemoSampleKey(sampleKey);
+    setResult(sample.result);
+    setReports(sampleReports);
+    setIncidents(sampleIncidents);
+    setSelectedIncident(sampleIncidents[0] || null);
+    setLiveResult(null);
+    setError("");
+    setChunkError("");
+    setMimicryError("");
+  };
+
   const logout = () => {
     localStorage.removeItem("sonict_access_token");
     localStorage.removeItem("sonict_user");
     sessionStorage.removeItem("sonict_access_token");
     sessionStorage.removeItem("sonict_user");
+    sessionStorage.removeItem("sonict_demo_mode");
+    sessionStorage.removeItem("sonict_demo_sample");
+    setDemoMode(false);
     setAuthToken("");
+    setResult(null);
+    setReports([]);
+    setIncidents([]);
+    setSelectedIncident(null);
     setAuthForm((current) => ({ ...current, password: "", confirmPassword: "" }));
   };
 
@@ -7844,6 +8174,16 @@ const renderAlertsPage = () => {
               <button className="auth-submit" type="submit" disabled={authLoading}>{authLoading ? "Securing access..." : authMode === "signin" ? "Sign in securely" : "Create secure account"}<span>{authLoading ? "" : "→"}</span></button>
             </form>
 
+            <div className="demo-entry">
+              <div className="demo-divider"><span>or</span></div>
+              <button type="button" className="demo-entry-button" onClick={enterDemoMode}>
+                <span className="demo-entry-icon">▶</span>
+                <span><strong>View Interactive Demo</strong><small>No login or backend required</small></span>
+                <span aria-hidden="true">→</span>
+              </button>
+              <p>Uses a pre-analysed prototype sample. Results are for demonstration only.</p>
+            </div>
+
             <p className="auth-security-note"><span>⌾</span> Protected access · Hashed credentials · Signed session token</p>
           </div>
         </section>
@@ -7853,7 +8193,14 @@ const renderAlertsPage = () => {
 
   return (
 
-    <div className="app">
+    <div className={`app ${demoMode ? "demo-mode-active" : ""}`}>
+
+      {demoMode && (
+        <div className="demo-mode-banner" role="status">
+          <span><strong>DEMO MODE</strong> · Pre-analysed prototype sample · No backend connection required</span>
+          <button type="button" onClick={logout}>Exit demo</button>
+        </div>
+      )}
 
       <aside className="sidebar">
 
@@ -7919,7 +8266,7 @@ const renderAlertsPage = () => {
             </strong>
 
             <span>
-              5 forensic models + fusion + mimicry
+              {demoMode ? "Offline sample · backend not connected" : "5 forensic models + fusion + mimicry"}
             </span>
 
           </div>
@@ -7927,13 +8274,40 @@ const renderAlertsPage = () => {
         </div>
 
         <button type="button" className="sidebar-logout" onClick={logout}>
-          <span>↪</span> Sign out
+          <span>↪</span> {demoMode ? "Exit demo" : "Sign out"}
         </button>
 
       </aside>
 
 
       <main className="main-content">
+
+        {demoMode && (
+          <section className="demo-sample-panel" aria-label="Pre-analysed demonstration samples">
+            <div className="demo-sample-heading">
+              <div>
+                <span>OFFLINE TEST CASES</span>
+                <strong>Select a pre-analysed audio sample</strong>
+              </div>
+              <small>Selection updates the dashboard, evidence, alerts and report.</small>
+            </div>
+            <div className="demo-sample-options">
+              {Object.entries(DEMO_SAMPLES).map(([sampleKey, sample]) => (
+                <button
+                  key={sampleKey}
+                  type="button"
+                  className={demoSampleKey === sampleKey ? "active" : ""}
+                  onClick={() => selectDemoSample(sampleKey)}
+                >
+                  <span className={`demo-sample-dot ${sampleKey}`} />
+                  <span><strong>{sample.label}</strong><small>{sample.description}</small></span>
+                  <b>{sample.result.voice_integrity_risk.risk_score}/100</b>
+                </button>
+              ))}
+            </div>
+            <p>These are stored prototype results. Uploading and analysing a new audio file requires the live SonicT API.</p>
+          </section>
+        )}
 
         {activePage === "dashboard" && renderDashboardPage()}
 
