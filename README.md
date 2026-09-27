@@ -30,6 +30,19 @@ The offline demo uses predefined examples and remains available when the AI back
 
 The individual feature probabilities are combined by a fusion model to produce the final classification, confidence, risk score and recommended action.
 
+| Metric | SonicT Result |
+|---|---:|
+| **Accuracy        -  84.76%** 
+| **Macro Precision -  84.92%** 
+| **Macro Recall    -  84.76%** 
+| **Macro F1-Score  -  84.66%** 
+
+Metric	SonicT Result
+Accuracy	84.76%
+Macro Precision	84.92%
+Macro Recall	84.76%
+Macro F1-Score	84.66%
+
 ## Repository Structure
 
 ```text
