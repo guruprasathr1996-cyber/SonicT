@@ -1,6 +1,14 @@
 # SonicT — Intelligent Voice Forensics & Identity Protection
 
-SonicT is an explainable AI-powered audio forensic platform designed to detect voice-cloning, audio manipulation and replay-based impersonation attacks. The project combines a React web interface, a FastAPI inference backend and an Android call-monitoring application in one repository.
+SonicT is an explainable AI-powered audio forensic platform designed to detect voice-cloning, audio manipulation and replay-based impersonation attacks. The project 
+combines a React web interface, a FastAPI inference backend and an Android call-monitoring application in one repository.
+
+## 🎥 Project Demonstration Video
+
+The complete demonstration of our project is available here:
+
+[▶ Watch Project Demo on Google Drive]
+https://drive.google.com/drive/folders/1prUMngNcLeXUj9i63TSF6342COT52bSq?usp=sharing
 
 ## Live Demo
 
